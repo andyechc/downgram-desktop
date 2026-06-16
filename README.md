@@ -1,27 +1,101 @@
-This is a Kotlin Multiplatform project targeting Desktop (JVM).
+# Downgram Desktop
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+Desktop app to search and download media from Telegram channels, groups, and chats. Built with Kotlin/Compose Multiplatform (Cupertino design) + Python/FastAPI backend.
 
-### Build and Run Desktop (JVM) Application
+![macOS](https://img.shields.io/badge/platform-macOS-purple) ![Windows](https://img.shields.io/badge/platform-Windows-purple)
 
-To build and run the development version of the desktop app, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:run
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:run
-  ```
+## Features
 
----
+- Cupertino-style UI (purple theme, light/dark/auto)
+- Search media across Telegram dialogs
+- Download with progress and concurrent limit control
+- Import session via `.dwngm` file
+- Export as DMG (macOS) or MSI (Windows)
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+## Requirements
+
+- **Java 17** (Zulu or Temurin)
+- **Python 3.12+** (only for development or when running without PyInstaller binary)
+
+## Quick Start (Development)
+
+```bash
+export JAVA_HOME=/path/to/zulu-17.jdk/Contents/Home  # macOS
+# or
+$env:JAVA_HOME = "C:\Program Files\Zulu\zulu-17"      # Windows
+
+./gradlew :composeApp:run
+```
+
+The app will auto-launch the Python backend (via `venv` or system Python).
+
+## Package for Distribution
+
+### macOS — DMG
+
+```bash
+export JAVA_HOME=/path/to/zulu-17.jdk/Contents/Home
+cd composeApp/backend
+python -m venv venv
+venv/bin/pip install -r requirements.txt pyinstaller
+venv/bin/pyinstaller downgram-backend.spec
+cp dist/downgram-backend ../backend-bin/common/
+cd ../..
+./gradlew :composeApp:packageDmg
+```
+
+DMG → `composeApp/build/compose/binaries/main/dmg/Downgram-*.dmg`
+
+### Windows — MSI
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Zulu\zulu-17"
+cd composeApp/backend
+python -m venv venv
+venv\Scripts\pip install -r requirements.txt pyinstaller
+venv\Scripts\pyinstaller downgram-backend.spec
+copy dist\downgram-backend.exe ..\backend-bin\common\
+cd ..\..
+gradlew :composeApp:packageMsi
+```
+
+MSI → `composeApp\build\compose\binaries\main\msi\Downgram-*.msi`
+
+### CI (GitHub Actions)
+
+On every push to `main`, a workflow builds and releases both platforms automatically.
+
+## Project Structure
+
+```
+composeApp/
+├── backend/                          # Python/FastAPI backend
+│   ├── main.py                       # FastAPI server + WebSocket
+│   ├── telegram_client.py            # Telethon client
+│   ├── downloader.py                 # Download manager
+│   ├── config.py                     # Configuration
+│   └── downgram-backend.spec         # PyInstaller spec
+├── backend-bin/common/               # Packaged backend binaries
+│   ├── downgram-backend              # PyInstaller binary (macOS)
+│   └── *.py                          # Python source fallback
+└── src/jvmMain/kotlin/com/andyechc/downgram/
+    ├── main.kt                       # App entry + navigation
+    ├── BackendService.kt             # Spawns Python backend
+    ├── data/
+    │   ├── model/Models.kt           # Data models
+    │   ├── repository/
+    │   │   ├── TelegramRepository.kt # HTTP/WS client
+    │   │   └── SettingsRepository.kt # Java Prefs persistence
+    ├── ui/
+    │   ├── components/               # Cupertino components
+    │   ├── screen/                   # App screens
+    │   ├── theme/                    # Purple color scheme
+    │   ├── viewmodel/                # MVVM view models
+    │   └── utils/FormatUtils.kt     # Size formatting
+```
+
+## Notes
+
+- **macOS Gatekeeper**: the unsigned DMG requires right-click → Open on first launch.
+- **Apple Silicon only**: the included PyInstaller binary is arm64. Rebuild for Intel if needed.
+- **Credentials**: not embedded. Each user imports a `.dwngm` file or enters API ID/Hash manually.
