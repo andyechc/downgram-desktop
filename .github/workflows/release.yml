@@ -1,0 +1,87 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            dist-type: Dmg
+            gradle-task: packageDmg
+            artifact-name: Downgram-macOS.dmg
+            artifact-path: composeApp/build/compose/binaries/main/dmg/*.dmg
+
+          - os: windows-latest
+            dist-type: Msi
+            gradle-task: packageMsi
+            artifact-name: Downgram-Windows.msi
+            artifact-path: composeApp/build/compose/binaries/main/msi/*.msi
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        shell: bash
+        working-directory: composeApp/backend
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+
+      - name: Build PyInstaller binary
+        working-directory: composeApp/backend
+        run: |
+          python -m PyInstaller downgram-backend.spec
+
+      - name: Copy binary to backend-bin
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp composeApp/backend/dist/downgram-backend.exe composeApp/backend-bin/common/
+          else
+            cp composeApp/backend/dist/downgram-backend composeApp/backend-bin/common/
+          fi
+
+      - name: Build with Gradle
+        run: |
+          ./gradlew :composeApp:${{ matrix.gradle-task }} --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.artifact-path }}
+
+  create-release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Downgram-*
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Downgram v${{ github.run_number }}
+          files: Downgram-*
+          draft: false
+          prerelease: false
+          generate_release_notes: true

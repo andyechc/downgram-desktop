@@ -1,0 +1,10 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Combined: Background circle + foreground airplane -->
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="55" fill="#6D28D9"/>
+  <circle cx="60" cy="60" r="55" stroke="#4C1D95" stroke-width="1"/>
+  <!-- Highlight -->
+  <ellipse cx="40" cy="35" rx="30" ry="20" fill="white" fill-opacity="0.12"/>
+  <!-- Airplane silhouette -->
+  <path d="M55 84V66L35 72V65L55 56V43C55 40.2 56.5 37 60 37C63.5 37 65 40.2 65 43V56L85 65V72L65 66V84L72 87V90L60 87L48 90V87L55 84Z" fill="white"/>
+</svg>

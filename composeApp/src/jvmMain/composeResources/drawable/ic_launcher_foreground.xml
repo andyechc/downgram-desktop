@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Airplane silhouette foreground -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.95"
+        android:pathData="M50,76V60L32,65V59L50,51V39.5C50,37 51.5,34 54,34C56.5,34 58,37 58,39.5V51L76,59V65L58,60V76L64,78.5V81.5L54,79.5L44,81.5V78.5L50,76Z"/>
+</vector>
